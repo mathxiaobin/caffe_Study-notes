@@ -1,0 +1,8 @@
+Input
+
+    n * c_i * h_i * w_i
+
+Output
+
+    n * c_o * 1 * 1
+
