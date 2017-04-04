@@ -1,1 +1,99 @@
-convolves the input image with a set of learnable filters, each producing one feature map in the output image.
+下面引用自“http://caffe.berkeleyvision.org/tutorial/layers/convolution.html”
+先复制粘帖一下，再再必要的地方加一些中文的部分。
+    Input
+        n * c_i * h_i * w_i
+    Output
+        n * c_o * h_o * w_o, where h_o = (h_i + 2 * pad_h - kernel_h) / stride_h + 1 and w_o likewise.
+
+    The Convolution layer convolves the input image with a set of learnable filters, each producing one feature map in the output       image.
+Sample(例子)
+    layer {
+    name: "conv1"
+    type: "Convolution"
+    bottom: "data"
+    top: "conv1"
+    # learning rate and decay multipliers for the filters
+    param { lr_mult: 1 decay_mult: 1 }
+    # learning rate and decay multipliers for the biases
+    param { lr_mult: 2 decay_mult: 0 }
+    convolution_param {
+      num_output: 96     # learn 96 filters
+      kernel_size: 11    # each filter is 11x11
+      stride: 4          # step 4 pixels between each filter application
+      weight_filler {
+        type: "gaussian" # initialize the filters from a Gaussian
+        std: 0.01        # distribution with stdev 0.01 (default mean: 0)
+      }
+      bias_filler {
+        type: "constant" # initialize the biases to zero (0)
+        value: 0
+      }
+     }
+    }
+Parameters（参数说明）
+  Parameters (ConvolutionParameter convolution_param)
+    Required（必要的）
+        num_output (c_o): the number of filters（输出的个数）
+        kernel_size (or kernel_h and kernel_w): specifies height and width of each filter（卷积核尺度）
+    Strongly Recommended（强烈建议添加的参数项）
+        weight_filler [default type: 'constant' value: 0]（这里指卷积核的初始化参数类型，默认的是都设为0，当然还有其他选项，比如有gaussian类型等等）
+    Optional（可选的）
+        bias_term [default true]: specifies whether to learn and apply a set of additive biases to the filter outputs（卷积核的进行卷积运算后，可选择性的加上偏置项，偏置项的个数通常来讲是输出的个数）
+        pad (or pad_h and pad_w) [default 0]: specifies the number of pixels to (implicitly) add to each side of the input（每张图边缘部分需要扩展的像素个数）
+        stride (or stride_h and stride_w) [default 1]: specifies the intervals at which to apply the filters to the input（卷积核进行滑窗时的步幅，单位是像素）
+        group (g) [default 1]: If g > 1, we restrict the connectivity of each filter to a subset of the input. Specifically, the input and output channels are separated into g groups, and the ith output group channels will be only connected to the ith input group channels.（要把多个卷积核分成几组放置，这个在Alexnet中就有用到，当时是因为计算机的计算能力有限，同时也可能是为了提高计算效率，把卷积核分成两组，分别在两个不同的GPU卡上运算，所以group=2）
+From ./src/caffe/proto/caffe.proto):
+    message ConvolutionParameter {
+  optional uint32 num_output = 1; // The number of outputs for the layer
+  optional bool bias_term = 2 [default = true]; // whether to have bias terms
+
+  // Pad, kernel size, and stride are all given as a single value for equal
+  // dimensions in all spatial dimensions, or once per spatial dimension.
+  repeated uint32 pad = 3; // The padding size; defaults to 0
+  repeated uint32 kernel_size = 4; // The kernel size
+  repeated uint32 stride = 6; // The stride; defaults to 1
+  // Factor used to dilate the kernel, (implicitly) zero-filling the resulting
+  // holes. (Kernel dilation is sometimes referred to by its use in the
+  // algorithme à trous from Holschneider et al. 1987.)
+  repeated uint32 dilation = 18; // The dilation; defaults to 1
+
+  // For 2D convolution only, the *_h and *_w versions may also be used to
+  // specify both spatial dimensions.
+  optional uint32 pad_h = 9 [default = 0]; // The padding height (2D only)
+  optional uint32 pad_w = 10 [default = 0]; // The padding width (2D only)
+  optional uint32 kernel_h = 11; // The kernel height (2D only)
+  optional uint32 kernel_w = 12; // The kernel width (2D only)
+  optional uint32 stride_h = 13; // The stride height (2D only)
+  optional uint32 stride_w = 14; // The stride width (2D only)
+
+  optional uint32 group = 5 [default = 1]; // The group size for group conv
+
+  optional FillerParameter weight_filler = 7; // The filler for the weight
+  optional FillerParameter bias_filler = 8; // The filler for the bias
+  enum Engine {
+    DEFAULT = 0;
+    CAFFE = 1;
+    CUDNN = 2;
+  }
+  optional Engine engine = 15 [default = DEFAULT];
+
+  // The axis to interpret as "channels" when performing convolution.
+  // Preceding dimensions are treated as independent inputs;
+  // succeeding dimensions are treated as "spatial".
+  // With (N, C, H, W) inputs, and axis == 1 (the default), we perform
+  // N independent 2D convolutions, sliding C-channel (or (C/g)-channels, for
+  // groups g>1) filters across the spatial axes (H, W) of the input.
+  // With (N, C, D, H, W) inputs, and axis == 1, we perform
+  // N independent 3D convolutions, sliding (C/g)-channels
+  // filters across the spatial axes (D, H, W) of the input.
+  optional int32 axis = 16 [default = 1];
+
+  // Whether to force use of the general ND convolution, even if a specific
+  // implementation for blobs of the appropriate number of spatial dimensions
+  // is available. (Currently, there is only a 2D-specific convolution
+  // implementation; for input blobs with num_axes != 2, this option is
+  // ignored and the ND implementation will be used.)
+  optional bool force_nd_im2col = 17 [default = false];
+}
+
+
