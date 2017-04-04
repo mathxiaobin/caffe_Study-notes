@@ -1,0 +1,55 @@
+本文引用自：“http://caffe.berkeleyvision.org/tutorial/layers/innerproduct.html”，外加自己的中文注释。
+内积层（或全链接层）
+Input
+    n * c_i * h_i * w_i
+Output
+    n * c_o * 1 * 1
+Sample
+  layer {
+  name: "fc8"
+  type: "InnerProduct"
+  # learning rate and decay multipliers for the weights
+  param { lr_mult: 1 decay_mult: 1 }
+  # learning rate and decay multipliers for the biases
+  param { lr_mult: 2 decay_mult: 0 }
+  inner_product_param {
+    num_output: 1000
+    weight_filler {
+      type: "gaussian"
+      std: 0.01
+    }
+    bias_filler {
+      type: "constant"
+      value: 0
+    }
+  }
+  bottom: "fc7"
+  top: "fc8"
+  }
+  Parameters（参数）
+      
+    Required
+        num_output (c_o): the number of filters
+    Strongly recommended
+        weight_filler [default type: 'constant' value: 0]
+    Optional
+        bias_filler [default type: 'constant' value: 0]
+        bias_term [default true]: specifies whether to learn and apply a set of additive biases to the filter outputs
+From ./src/caffe/proto/caffe.proto:
+    message InnerProductParameter {
+  optional uint32 num_output = 1; // The number of outputs for the layer
+  optional bool bias_term = 2 [default = true]; // whether to have bias terms
+  optional FillerParameter weight_filler = 3; // The filler for the weight
+  optional FillerParameter bias_filler = 4; // The filler for the bias
+
+  // The first axis to be lumped into a single inner product computation;
+  // all preceding axes are retained in the output.
+  // May be negative to index from the end (e.g., -1 for the last axis).
+  optional int32 axis = 5 [default = 1];
+  // Specify whether to transpose the weight matrix or not.
+  // If transpose == true, any operations will be performed on the transpose
+  // of the weight matrix. The weight matrix itself is not going to be transposed
+  // but rather the transfer flag of operations will be toggled accordingly.
+  optional bool transpose = 6 [default = false];
+}
+
