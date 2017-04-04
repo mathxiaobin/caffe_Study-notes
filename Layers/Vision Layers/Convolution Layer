@@ -1,0 +1,1 @@
+convolves the input image with a set of learnable filters, each producing one feature map in the output image.
