@@ -1,0 +1,29 @@
+1.
+在digits中使用自己定义的PythonLayer的时候，一般的定义如下：
+layer {
+  type: 'Python'
+  name: 'loss'
+  top: 'loss'
+  bottom: 'softmax_out'
+  bottom: "label_flat"
+
+  python_param {
+    # the module name -- usually the filename -- that needs to be in $PYTHONPATH
+    module: 'digits_python_layers'
+    # the layer name -- the class name in the module
+    layer: 'DiceLoss'
+  }
+  exclude {
+    stage: "deploy"
+  }
+  # set loss weight so Caffe knows this is a loss layer.
+  # since PythonLayer inherits directly from Layer, this isn't automatically
+  # known to Caffe
+  loss_weight: 1
+}
+其中‘digits_python_layers’是digits自己默认的，不需要改动，只需要将自己的pythonLayer的文件指定给digits即可。
+同时，对于
+exclude {
+    stage: "deploy"
+  }
+如果不添加的话，会错误提示loss找不到bottom，需要include什么的错误，建议添加。
